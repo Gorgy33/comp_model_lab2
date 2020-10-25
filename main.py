@@ -99,7 +99,7 @@ def get_period(array):
     return period if period else len(array)
 
 
-def draw_histogram(v, K, m):
+def draw_histogram(v, K, m, message):
     """ Отрисовка гистограмм частот попаданий в интервалы
 
     Args:
@@ -116,7 +116,7 @@ def draw_histogram(v, K, m):
     plt.xticks(tmp + 0.5, index)
     plt.xlabel("Интервалы")
     plt.ylabel("Частоты")
-    plt.title("Гистограмма частот")
+    plt.title(f"Гистограмма частот {message}")
 
     plt.show()
 
@@ -151,7 +151,7 @@ def test1(array, n, u):
     math_expectation = n / 2  # Математическое ожидание числа перестановок
     # Если мат.ожидание попадает в доверительный интервал, то тест пройден
     if left_interval <= math_expectation <= right_interval:
-        return True, {"interval": [f"{'%.3f' % left_interval}", f"{'%.3f' % right_interval}"]}
+        return True, {"confidence interval": [f"[{'%.3f' % left_interval}", f"{'%.3f' % right_interval}]"]}
     else:
         return False, None
 
@@ -213,7 +213,7 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
     for h in hits:
         frequency.append(h/n)  # Подсчет относительных частот
     if show_hist:
-        draw_histogram(frequency, K, m) # Отрисовка гистограмм
+        draw_histogram(frequency, K, m, f"для теста №2 при n ={n}") # Отрисовка гистограмм
     math_expectation = math_expectation_by_x(x_n)  # Математическое ожидание
     dispersion = dispersion_of_x(x_n, math_expectation)  # Дисперсия
     P = 1 / K  # Теоретическая вероятность попадания в интервал
@@ -223,14 +223,14 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
     result['frequency'].update({'confidence interval': []})
     for v_i in frequency:
         l, u = confidence_interval_test_2(v_i, U, n, K)  # Доверительный интервал
-        result['frequency']['confidence interval'].append(f"{'%.3f' % l}-{'%.3f' % u}")
+        result['frequency']['confidence interval'].append(f"[{'%.3f' % l}; {'%.3f' % u}]")
         # print(f"[{'%.3f' % l}, {'%.3f' % u}]")
         # Если не попадает в доверительный интервал
         if P < l or P > u:
             result['frequency']['errors_elements'].append(v_i)
     if result['frequency']['errors_elements']:
-        result['errors'].append(f"Тест 2 не пройден для частот {result['frequency']['errors_elements']}"
-                                f" при  n = {n}.")
+        result['errors'].append(f"Test 2 failed for frequencies {result['frequency']['errors_elements']}"
+                                f" when  n = {n}.")
 
     math_expectation_teor = m / 2  # Теоретическое мат.ожидание
     dispersion_teor = m ** 2 / 12  # Теоретическая дисперсия
@@ -240,13 +240,13 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
     # Если не попадает в доверительный интервал
     if math_expectation_teor < left_interval_for_math_expectation\
             or math_expectation_teor > right_interval_for_math_expectation:
-        result['errors'].append(f"Тест 2 не пройден для математического ожидания при  n = {n}.")
+        result['errors'].append(f"Test 2 failed for mathematical expectation when  n = {n}.")
     # Построение доверительного интервала для дисперсии
     left_interval_for_dispersion = (n-1) * dispersion / stats.chi2.ppf(1 - alpha / 2, n - 1)
     right_interval_for_dispersion = (n-1) * dispersion / stats.chi2.ppf(alpha / 2, n - 1)
     # Если не попадает в доверительный интервал
     if dispersion_teor < left_interval_for_dispersion or dispersion_teor > right_interval_for_dispersion:
-        result['errors'].append(f"Тест 2 не пройден для дисперсии при  n = {n}.")
+        result['errors'].append(f"Test 2 failed for variance when n = {n}.")
     return (False if result['errors'] else True), result
 
 
@@ -311,7 +311,7 @@ def chi2(array, n, m, alpha):
     v = []
     for h in hits:
         v.append(h/n)
-    draw_histogram(v, interval_count, m)  # Отрисовка гистограмм
+    draw_histogram(v, interval_count, m, "для критерия хи-квадрат")  # Отрисовка гистограмм
     r = interval_count - 1  # Число степеней свободы
     # Подсчет достигнутого уровня значимости
     P_S = (1 / (2 ** (r / 2) * math.gamma(r/2))) * \
@@ -370,7 +370,7 @@ if __name__ == "__main__":
 
     write_to_json(f"{output_data_path}/self/generated_data.json", {"data": x})
     m = params['m']  # Параметр m ГСПЧ
-    randomized_array = [random.randint(0, m) for _ in range(params['n'])]
+    randomized_array = [random.randint(1, m-1) for _ in range(params['n'])]
     write_to_json(f"{output_data_path}/standard/generated_data.json", {"data": x})
     array_list = [x, randomized_array]
     for id, x in enumerate(array_list):
