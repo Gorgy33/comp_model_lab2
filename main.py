@@ -7,7 +7,7 @@ from os import makedirs
 from os.path import dirname
 from scipy import stats, integrate
 
-
+# Исключения
 class ValidateException(Exception):
     pass
 
@@ -71,6 +71,11 @@ def generate_list(function, x: list, n: int) -> list:
 
 
 def most_frequent(array):
+    """ Выбор самого часто встречающегося элемента в списке
+
+    Args:
+        array: исследуемый список
+    """
     if len(set(array)) == len(array):
         return 0
     return max(set(array), key=array.count)
@@ -153,7 +158,7 @@ def test1(array, n, u):
     if left_interval <= math_expectation <= right_interval:
         return True, {"confidence interval": [f"[{'%.3f' % left_interval}", f"{'%.3f' % right_interval}]"]}
     else:
-        return False, None
+        return False, {"confidence interval": [f"[{'%.3f' % left_interval}", f"{'%.3f' % right_interval}]"]}
 
 
 def confidence_interval_test_2(v, U, n, K):
