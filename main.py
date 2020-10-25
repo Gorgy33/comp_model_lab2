@@ -243,6 +243,7 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
     left_interval_for_math_expectation = math_expectation - U * math.sqrt(dispersion) / math.sqrt(n)
     right_interval_for_math_expectation = math_expectation + U * math.sqrt(dispersion) / math.sqrt(n)
     # Если не попадает в доверительный интервал
+    # TODO: вывод в файл мат.ожидания и его доверительного интервала
     if math_expectation_teor < left_interval_for_math_expectation\
             or math_expectation_teor > right_interval_for_math_expectation:
         result['errors'].append(f"Test 2 failed for mathematical expectation when  n = {n}.")
@@ -250,6 +251,7 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
     left_interval_for_dispersion = (n-1) * dispersion / stats.chi2.ppf(1 - alpha / 2, n - 1)
     right_interval_for_dispersion = (n-1) * dispersion / stats.chi2.ppf(alpha / 2, n - 1)
     # Если не попадает в доверительный интервал
+    # TODO: вывод в файл дисперсии и ее доверительного интервала
     if dispersion_teor < left_interval_for_dispersion or dispersion_teor > right_interval_for_dispersion:
         result['errors'].append(f"Test 2 failed for variance when n = {n}.")
     return (False if result['errors'] else True), result
