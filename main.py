@@ -7,12 +7,14 @@ from os import makedirs
 from os.path import dirname
 from scipy import stats, integrate
 
-# Исключения
+
 class ValidateException(Exception):
+    """"Исключение при ошибки валидации"""
     pass
 
 
 class PeriodException(Exception):
+    """Исключение при периоде меньшем 100"""
     pass
 
 
@@ -64,6 +66,8 @@ def generate_list(function, x: list, n: int) -> list:
         function: Функция-генератор псевдослучайной последовательности
         x: Список начальных значений
         n: Длина последовательности
+    Returns:
+        Псевдослучайная последовательность
     """
     for i in range(1, n):
         x.append(function(x[i], x[i-1]))
@@ -75,6 +79,8 @@ def most_frequent(array):
 
     Args:
         array: исследуемый список
+    Returns:
+        0 если в последовательности нет периода, период если есть
     """
     if len(set(array)) == len(array):
         return 0
@@ -86,6 +92,8 @@ def get_period(array):
 
     Args:
         array: Псевдослучайная последовательность
+    Returns:
+        Длина периода
     """
     array.reverse()
     t = 1  # Подпериоды
@@ -132,6 +140,8 @@ def count_Q(array, n):
     Args:
         array: Исследуемая последовательность
         n: Длина последовательности
+    Returns:
+        Количество перестановок
     """
     count = 0
     for i in range(n - 1):
@@ -147,6 +157,8 @@ def test1(array, n, u):
         array: Исследуемая последовательность
         n:  Длина последовательности
         u: Квантиль уровня стандартного нормального распределения
+    Returns:
+        Вывод по прохождению теста(True/False) и границы доверительного интервала
     """
 
     count = count_Q(array, n)  # Подсчет количества перестановок
@@ -169,6 +181,8 @@ def confidence_interval_test_2(v, U, n, K):
         U: Квантиль уровня стандартного нормального распределения
         n: Длина последовательности
         K: Количество интервалов разбиения
+    Returns:
+        Границы доверительного интервала
     """
     left_interval = v - (U / K) * math.sqrt((K - 1) / n)  # Левая граница доверительного интервала
     right_interval = v + (U / K) * math.sqrt((K - 1) / n)  # Правая граница доверительного интервала
@@ -180,6 +194,8 @@ def math_expectation_by_x(array):
 
     Args:
         array: Исследуемая последовательность
+    Returns:
+        Математическое ожидание
     """
     return sum(array) / len(array)
 
@@ -190,6 +206,8 @@ def dispersion_of_x(array, math_expectation):
     Args:
         array: Исследуемая последовательность
         math_expectation: Математическое ожидание
+    Returns:
+        Значение оценки дисперсии случайной величины
     """
     dispersion = 0
     for element in array:
@@ -208,6 +226,8 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
         U: Квантиль уровня стандартного нормального распределения
         alpha: Уровень значимости
         show_hist: Флаг отрисовки диагарамм
+    Returns:
+        Вывод по прохождению теста(True/False) и словарь, содержащий список ошибок, информацию по частотам, в том числе частоты на которых были ошибки
     """
     x_n = array[:n]  # Взятие подпоследовательности необходимой длины
     # Подсчет попаданий элементов в интервалы (hits: Кол-во попаданий. Bins: Интервалы.)
@@ -243,7 +263,6 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
     left_interval_for_math_expectation = math_expectation - U * math.sqrt(dispersion) / math.sqrt(n)
     right_interval_for_math_expectation = math_expectation + U * math.sqrt(dispersion) / math.sqrt(n)
     # Если не попадает в доверительный интервал
-    # TODO: вывод в файл мат.ожидания и его доверительного интервала
     if math_expectation_teor < left_interval_for_math_expectation\
             or math_expectation_teor > right_interval_for_math_expectation:
         result['errors'].append(f"Test 2 failed for mathematical expectation when  n = {n}.")
@@ -251,9 +270,15 @@ def test2(array, n, m, K, U, alpha, show_hist = True):
     left_interval_for_dispersion = (n-1) * dispersion / stats.chi2.ppf(1 - alpha / 2, n - 1)
     right_interval_for_dispersion = (n-1) * dispersion / stats.chi2.ppf(alpha / 2, n - 1)
     # Если не попадает в доверительный интервал
-    # TODO: вывод в файл дисперсии и ее доверительного интервала
     if dispersion_teor < left_interval_for_dispersion or dispersion_teor > right_interval_for_dispersion:
         result['errors'].append(f"Test 2 failed for variance when n = {n}.")
+    result.update({'math expectation': {'value': math_expectation_teor,
+                                        'confidence interval': f"[{'%.3f' % left_interval_for_math_expectation};"
+                                        f" {'%.3f' % right_interval_for_math_expectation}]"},
+                   'dispersion': {'value': dispersion_teor,
+                                  'confidence interval': f"[{'%.3f' % left_interval_for_dispersion};"
+                                  f" {'%.3f' % right_interval_for_dispersion}]"
+                                  }})
     return (False if result['errors'] else True), result
 
 
@@ -268,6 +293,8 @@ def test3(array, n, m, K, r, U, alpha):
         r: Количество подпоследовательностей
         U: Квантиль уровня стандартного нормального распределения
         alpha: Уровень значимости
+    Returns:
+        Вывод по прохождению теста(True/False) и словарь, содержащий результаты прохождения теста 1 и теста 2 у подпоследовательностей
     """
     t = (n - 1) // r  # Длина подпоследовательности
     x_n = []
@@ -304,7 +331,8 @@ def chi2(array, n, m, alpha):
         n: Длина последовательности
         m: Параметр m ГПСЧ
         alpha: Уровень значимости
-    :return:
+    Returns:
+        Вывод по прохождению теста(True/False) и список, содержащий достигнутый уровень значимости и значение статистики критерия
     """
     interval_count = math.ceil(math.log(n, 2) + 1)  # формула Старджесса для подсчета кол-ва интервалов
     hits, bins = np.histogram(array, bins=interval_count, range=(0, m))  # Подсчет попаданий элементов в интервалы (hits: Кол-во попаданий. Bins: Интервалы.)
@@ -341,6 +369,8 @@ def crit_omega2_anderson_darling(array, n, m, alpha):
         n: Длина последовательности
         m: Параметр m ГПСЧ
         alpha: Уровень значимости
+    Returns:
+        Вывод по прохождению теста(True/False) и список, содержащий достигнутый уровень значимости и значение статистики критерия
     """
     array.sort()  # Сортировка последовательности
     S = 0
